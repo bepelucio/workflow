@@ -6,7 +6,8 @@ var gulp = require('gulp'),
 	connect = require('gulp-connect'),
   gulpif = require('gulp-if'),
   uglify = require('gulp-uglify'),
-  uglifycss = require('gulp-uglifycss');
+  uglifycss = require('gulp-uglifycss'),
+  minifyHTML = require('gulp-minify-html'),
 	concat = require('gulp-concat');
 
 var env,
@@ -16,6 +17,7 @@ var env,
 	htmlSources,
 	jsonSources,
   uglifycss,
+  minifyHTML,
 	outputDir,
 	sassStyle;
 
@@ -65,7 +67,7 @@ gulp.task('compressCSS', function () {
 });
 
 gulp.task('compressJs', function() {
-  return gulp.src('production/js/*.js')
+  return gulp.src('builds/production/js/*.js')
     .pipe(uglify({
       mangle: false,
       compress: true,
@@ -91,7 +93,7 @@ gulp.task('watch', function(){
 	gulp.watch(coffeeSources, ['coffee']);
 	gulp.watch(jsSources,['js']);
 	gulp.watch('components/sass/*.scss', ['compass']);
-	gulp.watch(htmlSources,['html']);
+	gulp.watch('builds/development/*.html',['html']);
 	gulp.watch(jsonSources,['json']);
 });
 
@@ -103,8 +105,10 @@ gulp.task('connect', function(){
 });
 
 gulp.task('html', function(){
-	gulp.src(htmlSources)
-	   .pipe(connect.reload())
+	gulp.src('builds/development/*.html')
+    .pipe(gulpif(env=== 'production', minifyHTML()))
+    .pipe(gulpif(env=== 'production', gulp.dest(outputDir)))
+	  .pipe(connect.reload())
 });
 
 gulp.task('json', function(){
