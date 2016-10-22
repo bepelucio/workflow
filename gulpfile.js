@@ -4,6 +4,9 @@ var gulp = require('gulp'),
 	browserify = require('gulp-browserify'),
 	compass = require('gulp-compass'),
 	connect = require('gulp-connect'),
+  gulpif = require('gulp-if'),
+  uglify = require('gulp-uglify'),
+  uglifycss = require('gulp-uglifycss');
 	concat = require('gulp-concat');
 
 var env,
@@ -12,6 +15,7 @@ var env,
 	sassSources,
 	htmlSources,
 	jsonSources,
+  uglifycss,
 	outputDir,
 	sassStyle;
 
@@ -30,6 +34,7 @@ jsSources = ['components/scripts/*.js'];
 sassSources = ['components/sass/style.scss'];
 htmlSources = [outputDir + '*.html'];
 jsonSources = [outputDir + 'js/*.json'];
+uglifycss =  [outputDir + 'css/*.css'];
 
 
 gulp.task('coffee', function() {
@@ -39,12 +44,35 @@ gulp.task('coffee', function() {
 	.pipe(gulp.dest('components/scripts'))
 });
 
-	gulp.task('js',['coffee'] ,function(){
+gulp.task('js',function(){
 	gulp.src(jsSources)
 		.pipe(concat('script.js'))
 		.pipe(browserify())
+    .pipe(gulpif(env === 'production', uglify()))
 		.pipe (gulp.dest(outputDir + 'js'))
 		.pipe(connect.reload())
+});
+
+var uglifycss = require('gulp-uglifycss');
+ 
+gulp.task('compressCSS', function () {
+  gulp.src(sassSources)
+    .pipe(uglifycss({
+      "maxLineLen": 80,
+      "uglyComments": true
+    }))
+    .pipe(gulp.dest(outputDir + 'css'));
+});
+
+gulp.task('compressJs', function() {
+  return gulp.src('production/js/*.js')
+    .pipe(uglify({
+      mangle: false,
+      compress: true,
+      output: { beautify: false }
+     }))
+    .pipe(gulp.dest(outputDir + 'js'))
+    .pipe(connect.reload())
 });
 
 gulp.task('compass', function() {
