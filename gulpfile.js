@@ -9,6 +9,8 @@ var gulp = require('gulp'),
   uglifycss = require('gulp-uglifycss'),
   minifyHTML = require('gulp-minify-html'),
   jsonMinify = require('gulp-json-minify');
+  imagemin = require('gulp-imagemin'),
+  pngcrush = require('imagemin-pngcrush'),
 	concat = require('gulp-concat');
 
 var env,
@@ -17,10 +19,6 @@ var env,
 	sassSources,
 	htmlSources,
 	jsonSources,
-  uglifycss,
-  minifyHTML,
-	outputDir,
-  jsonMinify,
 	sassStyle;
 
 env = process.env.NODE_ENV || 'development';
@@ -40,6 +38,9 @@ htmlSources = [outputDir + '*.html'];
 jsonSources = [outputDir + 'js/*.json'];
 uglifycss =  [outputDir + 'css/*.css'];
 
+var imagemin = require('gulp-imagemin');
+var uglifycss = require('gulp-uglifycss');
+
 
 gulp.task('coffee', function() {
 	gulp.src(coffeeSources)
@@ -57,7 +58,6 @@ gulp.task('js',function(){
 		.pipe(connect.reload())
 });
 
-var uglifycss = require('gulp-uglifycss');
  
 gulp.task('compressCSS', function () {
   gulp.src(sassSources)
@@ -97,6 +97,7 @@ gulp.task('watch', function(){
 	gulp.watch('components/sass/*.scss', ['compass']);
 	gulp.watch('builds/development/*.html',['html']);
 	gulp.watch('builds/development/js/*.json',['json']);
+  gulp.watch('builds/development/images/**/*.*',['images'])
 });
 
 gulp.task('connect', function(){
@@ -118,9 +119,22 @@ gulp.task('json', function() {
   return gulp.src('builds/development/js/*.json')
       .pipe(jsonMinify())
       .pipe(gulp.dest('builds/production/js'))
+      .pipe(connect.reload())
 });
 
-gulp.task('default', ['html', 'coffee', 'js', 'json', 'compass', 'watch', 'connect'])
+gulp.task('images', function() {
+  gulp.src('builds/development/images/**/*.*')
+    .pipe(gulpif(env === 'production', imagemin({
+      progressive: true,
+      svgoPlugins: [{ removeViewBox: false }],
+      use: [pngcrush()]
+    })))
+    .pipe(gulpif(env === 'production', gulp.dest(outputDir + 'images')))
+    .pipe(connect.reload())
+});
+  
+
+gulp.task('default', ['html', 'coffee', 'js', 'json', 'compass', 'images' ,'compressJs', 'compressCSS', 'watch', 'connect'])
 
 
 
